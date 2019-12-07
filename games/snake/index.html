@@ -1,0 +1,801 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Snake</title>
+</head>
+
+<body>
+
+<canvas id="can" width="800" height="500">Not supported </canvas>
+<script>
+
+var ctx = document.getElementById('can').getContext('2d');
+var fps = 30;
+var g_fps;
+var g_sNode = new Array();
+var keyPress = new Array();
+var g_sNodeXpos = new Array();
+var g_sNodeYpos = new Array();
+var g_sNodeSize = 9;
+var g_snakeSize = 100;
+var g_snakeSizeLimit = 10;
+var g_sSpeed=5;
+var g_foodProp = new Array();		//0-randomx 1-randomy 2-random color 
+var grd,grds;
+var g_foodXPos = new Array();
+var g_foodYPos = new Array();
+var g_headXPos = new Array();
+var g_headYPos = new Array();
+var g_ballCollision=true;
+var g_powerup=false;
+var g_snakeCollision=false;
+var g_snakeMove=true;
+var g_mx,my;
+var g_score=0;
+
+
+//-------------------------------------------------------Snake Node Class-----------------------------------------------------------
+function c_snake(l_no,l_size) {
+this.nodeNum = l_no;
+this.size 	= l_size;
+
+//Methods
+this.drawNode = m_drawSnakeNode;
+	
+}
+
+function m_drawSnakeNode() {
+grds= ctx.createRadialGradient(g_sNodeXpos[this.nodeNum*11]+3,g_sNodeYpos[this.nodeNum*11]-4, g_sNodeSize-8,g_sNodeXpos[this.nodeNum*11],g_sNodeYpos[this.nodeNum*11], g_sNodeSize+3);
+	
+	  
+
+
+ctx.beginPath();
+ctx.arc(g_sNodeXpos[this.nodeNum*11],g_sNodeYpos[this.nodeNum*11],this.size,0,2*3.14);
+ctx.strokeStyle="black";
+ctx.stroke();
+ctx.lineWidth=1;
+ctx.beginPath();
+ctx.arc(g_sNodeXpos[this.nodeNum*11],g_sNodeYpos[this.nodeNum*11],this.size,0,2*3.14);
+
+if(this.nodeNum==0) {
+	
+		  grds.addColorStop(0.000, 'rgba(255, 255, 255, 1.000)');
+		  grds.addColorStop(0.052, 'rgba(150, 147, 147, 1.000)');
+		  grds.addColorStop(0.258, 'rgba(51, 49, 49, 1.000)');
+		  grds.addColorStop(0.414, 'rgba(35, 29, 29, 1.000)');
+		  grds.addColorStop(0.924, 'rgba(20, 9, 9, 1.000)');
+		  grds.addColorStop(0.982, 'rgba(33, 33, 33, 1.000)');
+	  }
+if(this.nodeNum!=0 && g_snakeCollision!=true)  {
+	  grds.addColorStop(0.000, 'rgba(255, 255, 255, 1.000)');
+	  grds.addColorStop(0.260, 'rgba(221, 221, 221, 1.000)');
+	  grds.addColorStop(0.512, 'rgba(188, 188, 188, 1.000)');
+	  grds.addColorStop(0.678, 'rgba(147, 147, 147, 1.000)');
+	  grds.addColorStop(0.906, 'rgba(33, 33, 33, 1.000)');
+}
+if(g_snakeCollision==true) {
+	  
+	  
+		  grds.addColorStop(0.000, 'rgba(255, 255, 255, 1.000)');
+		  grds.addColorStop(0.052, 'rgba(150, 147, 147, 1.000)');
+		  grds.addColorStop(0.258, 'rgba(51, 49, 49, 1.000)');
+		  grds.addColorStop(0.414, 'rgba(35, 29, 29, 1.000)');
+		  grds.addColorStop(0.924, 'rgba(20, 9, 9, 1.000)');
+		  grds.addColorStop(0.982, 'rgba(33, 33, 33, 1.000)');
+}
+	
+	  
+ctx.fillStyle=grds;
+ctx.fill();
+ctx.beginPath();
+ctx.fillStyle="rgba(255, 255, 255, 1)";
+ctx.fillText(8,g_sNodeXpos[0]-4,g_sNodeYpos[0]+5	);
+ctx.font='bold 14px arial';
+ctx.closePath();
+
+
+}
+
+//----------------------------------------------------------------------------------------------
+
+//Array of cordinates
+function assignArrayCordinates() {
+	for(var l_i=0;l_i<=g_snakeSize*10-1;l_i++) {
+	g_sNodeXpos[l_i]=480-l_i;
+	}
+	
+	for(var l_k=0;l_k<=g_snakeSize*10-1;l_k++) {
+	g_sNodeYpos[l_k]=265;	
+	}
+}
+
+
+//Assign objects
+function assignSnakeNodeObjects() {
+	var l_k=0;
+	for(var l_i=0;l_i<=g_snakeSize;l_i++) 	{
+	g_sNode[l_i] = new c_snake(l_i,g_sNodeSize);
+	}
+}
+
+
+
+function drawSnake() {
+		for (var l_i=g_snakeSizeLimit;l_i>=0;l_i--) {
+				g_sNode[l_i].drawNode();
+			}	
+}
+
+function snakeProperties() {
+		if(keyPress[32]==true) { g_snakeSizeLimit = 27; }	
+}
+
+function swapArrayCordinates() {
+		for(var l_i=g_sNodeXpos.length-1;l_i>0;l_i--) {
+			g_sNodeXpos[l_i] = g_sNodeXpos[(l_i)-1];
+			g_sNodeYpos[l_i] = g_sNodeYpos[(l_i)-1];
+		
+	}
+	for(var l_i=0;l_i<g_sNodeSize*2;l_i++) {
+	g_headXPos[l_i]=(g_sNodeXpos[0]-15)+l_i;
+	g_headYPos[l_i]=(g_sNodeYpos[0]-15)+l_i;
+	}
+}
+//-------------------Wall Collision and Body Collision---------------------
+function dectectCollision() {
+if(g_sNodeXpos[0]<(54+g_sNodeSize) || g_sNodeYpos[0] < (63+g_sNodeSize) || g_sNodeXpos[0] > (726+g_sNodeSize) || g_sNodeYpos[0] > (422+g_sNodeSize)) {
+	g_snakeCollision=true;
+	
+}
+	
+}
+
+function wallCollision() {
+if(g_snakeCollision==true) {
+	//g_snakeMove=false;
+	assignArrayCordinates();
+	g_snakeSizeLimit=10;
+	g_snakeCollision=false;
+}
+}
+//-------------------------------Random Spawn-----------------------------
+
+function drawPointBall(l_x,l_y,l_color) {
+	ctx.beginPath();
+	
+	 grd = ctx.createRadialGradient(l_x+3,l_y-4, g_sNodeSize-8, l_x, l_y, g_sNodeSize+3);
+	if(l_color==0) {		 
+			  grd.addColorStop(0.000, 'rgba(255, 255, 255, 1.000)');
+			  grd.addColorStop(0.260, 'rgba(221, 221, 221, 1.000)');
+			  grd.addColorStop(0.512, 'rgba(188, 188, 188, 1.000)');
+			  grd.addColorStop(0.678, 'rgba(147, 147, 147, 1.000)');
+			  grd.addColorStop(0.906, 'rgba(33, 33, 33, 1.000)');
+				 l_tc="";
+				 l_t="";
+		} 
+	
+	if(l_color==1) { 	
+		
+     
+	grd.addColorStop(0.230, 'rgba(124, 249, 0, 1.000)');
+      grd.addColorStop(0.462, 'rgba(26, 219, 26, 1.000)');
+      grd.addColorStop(0.628, 'rgba(9, 186, 9, 1.000)');
+      grd.addColorStop(0.906, 'rgba(33, 33, 33, 1.000)');
+		   l_tc="rgba(0, 0, 0, .2)";
+		   l_t="6";
+		} 
+	if(l_color==2) {
+			  
+			  
+			   grd.addColorStop(0.000, 'rgba(255, 255, 255, 1.000)');
+      grd.addColorStop(0.241, 'rgba(255, 91, 91, 1.000)');
+      grd.addColorStop(0.462, 'rgba(255, 0, 0, 1.000)');
+      grd.addColorStop(0.628, 'rgba(221, 0, 0, 1.000)');
+      grd.addColorStop(0.906, 'rgba(33, 33, 33, 1.000)');
+			  
+				 l_tc="rgba(0, 0, 0, .2)";
+				 l_t="7";
+		} 
+		  
+		  
+	ctx.fillStyle = grd;
+	
+	ctx.beginPath();
+	ctx.arc(l_x,l_y,g_sNodeSize+1,0,2*3.14);
+	ctx.fill();
+	ctx.lineWidth=0	;
+	//
+	ctx.closePath();
+	
+	ctx.beginPath();
+	ctx.fillStyle=l_tc;
+	ctx.fillText(l_t,l_x-4,l_y+5);
+	
+
+}
+	
+function randomBallSpawns() {
+	if(g_ballCollision==true) {
+	g_foodProp[0]=Math.floor((Math.random()*(can.width-127))+(55+g_sNodeSize));
+	g_foodProp[1]=Math.floor((Math.random()*(can.height-136))+(60+g_sNodeSize));
+	g_foodProp[2]=Math.floor(Math.random()*3);
+	for(var l_i=0;l_i<g_sNodeSize*2;l_i++) {
+	g_foodXPos[l_i]=(g_foodProp[0]-15)+l_i;
+	g_foodYPos[l_i]=(g_foodProp[1]-15)+l_i;
+	}
+	}
+	drawPointBall(g_foodProp[0],g_foodProp[1],g_foodProp[2])
+	g_ballCollision=false;
+	
+}
+
+function checkCollision () {
+	for(var l_a=0;l_a<=17;l_a++) {
+		for(var l_b=0;l_b<=17;l_b++) {
+			for(var l_c=0;l_c<=17;l_c++) {
+				for(var l_d=0;l_d<=17;l_d++) {
+					if(g_headXPos[l_a]==g_foodXPos[l_c]  && g_headYPos[l_b]==g_foodYPos[l_d]) {
+						g_ballCollision =true;
+						g_powerup=true;						
+					}
+				}
+			}
+		}
+	}
+	if(g_powerup==true) {
+						if(g_foodProp[2]==0) { g_score += 100;g_snakeSizeLimit=g_snakeSizeLimit+5 ;g_powerup=false} 
+						if(g_foodProp[2]==1) { g_score += 100;g_sSpeed=7 ;g_powerup=false } 
+						if(g_foodProp[2]==2) { g_score += 100;g_sSpeed=3 ;g_powerup=false } 
+	}
+}
+
+				  
+function directionController() {
+	if(g_snakeMove==true) {
+	for(var l_k=0;l_k<g_sSpeed;l_k++) {
+	if(keyPress[37]==true) { g_sNodeXpos[0] -= 1;	if(g_dir=="left")	{ swapArrayCordinates();} }
+	if(keyPress[38]==true) { g_sNodeYpos[0] -= 1;	if(g_dir=="up")	  { swapArrayCordinates();} }
+	if(keyPress[39]==true) { g_sNodeXpos[0] += 1;	if(g_dir=="right")   { swapArrayCordinates();} }
+	if(keyPress[40]==true) { g_sNodeYpos[0] += 1;	if(g_dir=="down")	{ swapArrayCordinates();} }
+	
+	
+}
+}
+}
+
+//--------------------------------------Key Handlers------------------------------------------------------
+function keyDownHandler(e) {
+
+		keyPress[e.keyCode]=true;
+		if(e.keyCode==37) {  g_dir="left";}
+		if(e.keyCode==38) {  g_dir="up"; }
+		if(e.keyCode==39) {  g_dir="right"; }
+		if(e.keyCode==40) {  g_dir="down"; }
+		if(e.keyCode==13) {  g_start=true; draw(ctx);}
+}
+
+function keyUpHandler(e) {
+		keyPress[e.keyCode]=false;
+		if(keyPress[37]==true) { g_dir="left" } ;
+		if(keyPress[38]==true) { g_dir="up" } ;
+		if(keyPress[39]==true) { g_dir="right" } ;
+		if(keyPress[40]==true) { g_dir="down" } ;
+		
+		
+}
+
+function fpss() {
+	g_fps=1000/fps;
+	
+}
+
+
+function draw(ctx) {
+
+      // svg4833/Group
+      ctx.save();
+
+      // svg4833/Group/rect4041
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(10.8, 11.9);
+      ctx.lineTo(789.0, 11.9);
+      ctx.lineTo(789.0, 486.4);
+      ctx.lineTo(10.8, 486.4);
+      ctx.lineTo(10.8, 11.9);
+      ctx.closePath();
+      ctx.fillStyle = "rgb(83, 83, 83)";
+      ctx.fill();
+
+      // svg4833/Group/rect2194
+      ctx.beginPath();
+
+      // svg4833/Group/rect2194/Path
+      ctx.moveTo(62.6, 37.1);
+      ctx.lineTo(81.9, 58.3);
+      ctx.lineTo(374.9, 58.3);
+      ctx.lineTo(374.9, 58.3);
+      ctx.lineTo(381.2, 37.1);
+      ctx.lineTo(62.6, 37.1);
+      ctx.closePath();
+
+      // svg4833/Group/rect2194/Path
+      ctx.moveTo(418.6, 37.1);
+      ctx.lineTo(425.0, 58.3);
+      ctx.lineTo(425.0, 58.3);
+      ctx.lineTo(718.0, 58.3);
+      ctx.bezierCurveTo(737.2, 37.1, 737.2, 37.1, 737.2, 37.1);
+      ctx.lineTo(737.2, 37.1);
+      ctx.lineTo(418.6, 37.1);
+      ctx.closePath();
+
+      // svg4833/Group/rect2194/Path
+      ctx.moveTo(766.2, 68.9);
+      ctx.lineTo(766.2, 68.9);
+      ctx.lineTo(746.9, 90.1);
+      ctx.lineTo(746.9, 408.2);
+      ctx.bezierCurveTo(766.2, 429.4, 766.2, 429.4, 766.2, 429.4);
+      ctx.lineTo(766.2, 429.4);
+      ctx.lineTo(766.2, 68.9);
+      ctx.closePath();
+
+      // svg4833/Group/rect2194/Path
+      ctx.moveTo(33.7, 68.9);
+      ctx.lineTo(33.7, 429.4);
+      ctx.lineTo(53.0, 408.2);
+      ctx.lineTo(53.0, 408.2);
+      ctx.lineTo(53.0, 90.1);
+      ctx.bezierCurveTo(33.7, 68.9, 33.7, 68.9, 33.7, 68.9);
+      ctx.lineTo(33.7, 68.9);
+      ctx.closePath();
+
+      // svg4833/Group/rect2194/Path
+      ctx.moveTo(81.9, 440.0);
+      ctx.lineTo(81.9, 440.0);
+      ctx.bezierCurveTo(62.6, 461.2, 62.6, 461.2, 62.6, 461.2);
+      ctx.lineTo(380.7, 461.2);
+      ctx.lineTo(380.7, 461.2);
+      ctx.lineTo(374.9, 440.0);
+      ctx.lineTo(81.9, 440.0);
+      ctx.closePath();
+
+      // svg4833/Group/rect2194/Path
+      ctx.moveTo(425.0, 440.0);
+      ctx.lineTo(418.6, 461.2);
+      ctx.lineTo(418.6, 461.2);
+      ctx.lineTo(737.2, 461.2);
+      ctx.lineTo(718.0, 440.0);
+      ctx.lineTo(425.0, 440.0);
+      ctx.closePath();
+      ctx.fillStyle = "rgb(31, 67, 9)";
+      ctx.fill();
+
+      // svg4833/Group/rect1307
+      ctx.beginPath();
+
+      // svg4833/Group/rect1307/Path
+      ctx.moveTo(20.2, 0.0);
+      ctx.bezierCurveTo(5.8, 0.4, -0.7, 9.3, 0.2, 26.5);
+      ctx.lineTo(0.0, 24.4);
+      ctx.lineTo(0.0, 473.5);
+      ctx.lineTo(0.1, 471.8);
+      ctx.bezierCurveTo(-0.9, 488.7, 5.5, 497.4, 18.9, 498.3);
+      ctx.lineTo(24.1, 498.3);
+      ctx.lineTo(782.7, 498.3);
+      ctx.bezierCurveTo(793.2, 497.1, 798.9, 490.6, 799.9, 478.8);
+      ctx.lineTo(799.9, 19.0);
+      ctx.bezierCurveTo(798.8, 7.1, 792.5, 0.8, 781.4, 0.0);
+      ctx.lineTo(23.1, 0.0);
+      ctx.lineTo(24.3, 0.1);
+      ctx.bezierCurveTo(23.5, 0.1, 22.7, 0.0, 21.9, 0.0);
+      ctx.lineTo(20.2, 0.0);
+      ctx.closePath();
+
+      // svg4833/Group/rect1307/Path
+      ctx.moveTo(399.6, 19.3);
+      ctx.bezierCurveTo(399.6, 19.3, 399.7, 19.3, 399.7, 19.3);
+      ctx.bezierCurveTo(399.7, 19.3, 399.8, 19.3, 399.8, 19.3);
+      ctx.bezierCurveTo(408.8, 19.3, 417.8, 25.3, 420.7, 37.1);
+      ctx.lineTo(735.5, 37.1);
+      ctx.lineTo(739.7, 32.5);
+      ctx.bezierCurveTo(744.9, 27.5, 750.5, 25.4, 755.7, 25.4);
+      ctx.bezierCurveTo(772.6, 25.3, 785.6, 47.7, 770.4, 66.3);
+      ctx.lineTo(766.2, 71.0);
+      ctx.lineTo(766.2, 427.4);
+      ctx.lineTo(769.8, 431.4);
+      ctx.bezierCurveTo(789.1, 456.0, 761.2, 487.0, 739.1, 465.1);
+      ctx.lineTo(735.5, 461.2);
+      ctx.lineTo(420.6, 461.2);
+      ctx.bezierCurveTo(415.0, 485.2, 384.7, 485.6, 378.9, 461.2);
+      ctx.lineTo(64.3, 461.2);
+      ctx.lineTo(60.4, 465.6);
+      ctx.bezierCurveTo(38.0, 486.9, 9.8, 456.1, 29.7, 431.8);
+      ctx.lineTo(33.7, 427.3);
+      ctx.lineTo(33.7, 70.8);
+      ctx.lineTo(29.8, 66.5);
+      ctx.bezierCurveTo(15.1, 47.8, 27.6, 25.5, 44.1, 25.3);
+
+      ctx.bezierCurveTo(49.4, 25.2, 55.1, 27.4, 60.5, 32.7);
+      ctx.lineTo(64.5, 37.1);
+      ctx.lineTo(379.2, 37.1);
+      ctx.bezierCurveTo(382.1, 25.4, 390.8, 19.5, 399.6, 19.3);
+      ctx.closePath();
+      ctx.fillStyle = "rgb(129, 54, 12)";
+      ctx.fill();
+
+      // svg4833/Group/path1333
+      ctx.beginPath();
+      ctx.moveTo(40.0, 77.7);
+      ctx.lineTo(29.8, 66.4);
+      ctx.bezierCurveTo(10.4, 41.8, 38.4, 10.9, 60.5, 32.7);
+      ctx.lineTo(70.7, 43.9);
+      ctx.lineTo(70.8, 44.1);
+      ctx.lineTo(69.6, 44.8);
+      ctx.lineTo(57.7, 34.1);
+      ctx.bezierCurveTo(36.4, 28.5, 25.9, 40.1, 30.9, 63.6);
+      ctx.bezierCurveTo(32.5, 66.1, 34.1, 68.1, 35.7, 70.1);
+      ctx.lineTo(40.8, 76.7);
+      ctx.lineTo(40.0, 77.7);
+      ctx.closePath();
+      ctx.fillStyle = "rgb(0, 0, 0)";
+      ctx.fill();
+      ctx.lineWidth = 0.1;
+      ctx.lineJoin = "miter";
+      ctx.miterLimit = 4.0;
+      ctx.stroke();
+
+      // svg4833/Group/path2251
+      ctx.beginPath();
+      ctx.moveTo(70.6, 454.4);
+      ctx.lineTo(60.3, 465.7);
+      ctx.bezierCurveTo(37.9, 487.0, 9.8, 456.2, 29.6, 431.9);
+      ctx.lineTo(39.9, 420.6);
+      ctx.lineTo(40.1, 420.5);
+      ctx.lineTo(40.7, 421.8);
+      ctx.lineTo(30.9, 434.9);
+      ctx.bezierCurveTo(25.8, 458.4, 36.4, 469.9, 57.8, 464.4);
+      ctx.bezierCurveTo(60.1, 462.6, 61.9, 460.9, 63.6, 459.1);
+      ctx.lineTo(69.7, 453.5);
+      ctx.lineTo(70.6, 454.4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // svg4833/Group/path2253
+      ctx.beginPath();
+      ctx.moveTo(759.5, 420.1);
+      ctx.lineTo(769.8, 431.4);
+      ctx.bezierCurveTo(789.1, 456.0, 761.2, 487.0, 739.1, 465.2);
+      ctx.lineTo(728.8, 453.9);
+      ctx.lineTo(728.7, 453.7);
+      ctx.lineTo(729.9, 453.1);
+      ctx.lineTo(741.8, 463.8);
+      ctx.bezierCurveTo(763.2, 469.4, 773.6, 457.7, 768.7, 434.2);
+      ctx.bezierCurveTo(767.0, 431.7, 765.4, 429.7, 763.8, 427.8);
+      ctx.lineTo(758.7, 421.1);
+      ctx.lineTo(759.5, 420.1);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // svg4833/Group/path2255
+      ctx.beginPath();
+      ctx.moveTo(729.5, 43.8);
+      ctx.lineTo(739.7, 32.5);
+      ctx.bezierCurveTo(762.1, 11.2, 790.3, 42.0, 770.4, 66.3);
+      ctx.lineTo(760.2, 77.6);
+      ctx.lineTo(760.0, 77.7);
+      ctx.lineTo(759.4, 76.4);
+      ctx.lineTo(769.2, 63.3);
+      ctx.bezierCurveTo(774.3, 39.8, 763.7, 28.3, 742.3, 33.8);
+      ctx.bezierCurveTo(740.0, 35.5, 738.2, 37.3, 736.4, 39.1);
+      ctx.lineTo(730.4, 44.7);
+      ctx.lineTo(729.5, 43.8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // svg4833/Group/path2265
+      ctx.beginPath();
+      ctx.moveTo(378.0, 455.0);
+      ctx.bezierCurveTo(379.2, 491.0, 419.1, 490.4, 421.5, 455.0);
+      ctx.lineTo(421.5, 454.9);
+      ctx.lineTo(420.5, 455.7);
+      ctx.bezierCurveTo(410.4, 480.9, 387.9, 481.0, 379.0, 455.7);
+      ctx.lineTo(378.0, 455.0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // svg4833/Group/path3147
+      ctx.beginPath();
+      ctx.moveTo(378.3, 44.3);
+      ctx.bezierCurveTo(379.4, 8.3, 419.4, 8.9, 421.8, 44.3);
+      ctx.lineTo(421.8, 44.4);
+      ctx.lineTo(420.8, 43.6);
+      ctx.bezierCurveTo(410.7, 18.4, 388.2, 18.3, 379.3, 43.6);
+      ctx.lineTo(378.3, 44.3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // svg4833/Group/rect1318
+      ctx.beginPath();
+      ctx.moveTo(71.8, 48.9);
+      ctx.bezierCurveTo(71.7, 72.3, 64.0, 77.0, 43.7, 77.2);
+      ctx.lineTo(40.8, 76.7);
+      ctx.lineTo(53.0, 90.1);
+      ctx.lineTo(53.0, 408.2);
+      ctx.lineTo(47.6, 414.1);
+      ctx.lineTo(40.7, 421.8);
+      ctx.lineTo(46.3, 421.9);
+      ctx.bezierCurveTo(66.7, 425.7, 68.7, 434.4, 69.5, 443.9);
+      ctx.lineTo(69.7, 453.5);
+      ctx.lineTo(81.9, 440.0);
+      ctx.lineTo(374.9, 440.0);
+      ctx.lineTo(379.0, 455.7);
+      ctx.lineTo(382.0, 453.4);
+      ctx.bezierCurveTo(395.5, 442.3, 406.5, 444.9, 420.5, 455.7);
+      ctx.lineTo(422.3, 448.9);
+      ctx.lineTo(425.0, 440.0);
+      ctx.lineTo(718.0, 440.0);
+      ctx.lineTo(729.9, 453.1);
+      ctx.lineTo(728.7, 445.2);
+      ctx.bezierCurveTo(729.6, 428.9, 738.4, 421.3, 758.7, 421.1);
+      ctx.lineTo(754.7, 416.8);
+      ctx.lineTo(746.9, 408.2);
+      ctx.lineTo(746.9, 90.1);
+      ctx.lineTo(759.4, 76.4);
+      ctx.lineTo(755.7, 76.0);
+      ctx.bezierCurveTo(743.5, 73.9, 733.5, 68.6, 730.9, 48.3);
+      ctx.lineTo(730.4, 44.7);
+      ctx.lineTo(718.0, 58.3);
+      ctx.lineTo(425.0, 58.3);
+      ctx.lineTo(420.8, 43.6);
+      ctx.lineTo(418.9, 46.0);
+      ctx.bezierCurveTo(404.9, 56.8, 395.0, 57.1, 381.5, 46.1);
+      ctx.lineTo(379.3, 43.6);
+      ctx.lineTo(374.9, 58.3);
+      ctx.lineTo(81.9, 58.3);
+      ctx.lineTo(69.6, 44.8);
+      ctx.lineTo(71.8, 48.9);
+      ctx.closePath();
+      ctx.fillStyle = "rgb(16, 108, 20)";
+      ctx.fill();
+      ctx.restore();
+      ctx.restore();
+    }
+
+
+function clearScreen() {
+ctx.fillStyle="#116D15";
+//ctx.fillStyle="rgb(25,133,0)";
+ctx.beginPath();
+ctx.moveTo(71,50);
+ctx.bezierCurveTo(71,73,64,78,43,78);
+ctx.lineTo(40,78);
+ctx.lineTo(53,91);
+ctx.lineTo(53,409);
+ctx.lineTo(47,415);
+ctx.lineTo(40,423);
+ctx.lineTo(46,423);
+ctx.bezierCurveTo(66,427,68,435,69,445);
+ctx.lineTo(69,454);
+ctx.lineTo(82,441);
+ctx.lineTo(375,441);
+ctx.lineTo(379,456);
+ctx.lineTo(382,454);
+ctx.bezierCurveTo(395,443,406,446,420,456);
+ctx.lineTo(422,450);
+ctx.lineTo(425,441);
+ctx.lineTo(718,441);
+ctx.lineTo(730,454);
+ctx.lineTo(728,446);
+ctx.bezierCurveTo(729,430,738,422,758,422);
+ctx.lineTo(754,418);
+ctx.lineTo(747,409);
+ctx.lineTo(747,91);
+ctx.lineTo(759,77);
+ctx.lineTo(755,77);
+ctx.bezierCurveTo(743,75,733,69,731,49);
+ctx.lineTo(730,45);
+ctx.lineTo(718,59);
+ctx.lineTo(425,59);
+ctx.lineTo(420,44);
+ctx.lineTo(419,47);
+ctx.bezierCurveTo(405,58,395,58,381,47);
+ctx.lineTo(379,44);
+ctx.lineTo(375,59);
+ctx.lineTo(82,59);
+ctx.lineTo(69,46);
+ctx.lineTo(71,50);
+ctx.fill();
+
+ctx.fillStyle="rgb(84,84,84)";
+ctx.beginPath();
+ctx.moveTo(41,78);
+ctx.bezierCurveTo(41,62,41,57,41,57);
+ctx.lineTo(71,57);
+ctx.bezierCurveTo(71,57,71,58,71,62);
+ctx.bezierCurveTo(70,66,69,68,68,69);
+ctx.bezierCurveTo(66,73,61,76,58,76);
+ctx.lineTo(54,77);
+ctx.lineTo(50,78);
+ctx.lineTo(45,78);
+ctx.lineTo(41,78);
+ctx.fill();
+
+ctx.fillStyle="rgb(84,84,84)";
+ctx.beginPath();
+ctx.moveTo(759,77);
+ctx.bezierCurveTo(759,64,759,59,759,59);
+ctx.lineTo(733,59);
+ctx.bezierCurveTo(733,59,733,60,734,62);
+ctx.bezierCurveTo(736,66,737,67,738,68);
+ctx.bezierCurveTo(741,71,740,70,743,73);
+ctx.lineTo(746,74);
+ctx.lineTo(750,76);
+ctx.lineTo(755,77);
+ctx.lineTo(759,77);
+ctx.fill();
+
+ctx.fillStyle="rgb(84,84,84)";
+ctx.beginPath();
+ctx.moveTo(730,454);
+ctx.bezierCurveTo(743,454,749,454,749,454);
+ctx.lineTo(748,423);
+ctx.bezierCurveTo(748,423,746,423,743,424);
+ctx.bezierCurveTo(739,426,736,428,736,428);
+ctx.bezierCurveTo(732,432,733,432,731,435);
+ctx.lineTo(729,439);
+ctx.lineTo(729,444);
+ctx.lineTo(729,446);
+ctx.lineTo(729,449);
+ctx.lineTo(730,454);
+ctx.fill();
+
+ctx.fillStyle="rgb(84,84,84)";
+ctx.beginPath();
+ctx.moveTo(69,454);
+ctx.bezierCurveTo(49,454,41,454,41,454);
+ctx.lineTo(40,423);
+ctx.bezierCurveTo(40,423,41,423,42,423);
+ctx.bezierCurveTo(42,423,42,423,43,423);
+ctx.bezierCurveTo(43,422,44,422,46,423);
+ctx.bezierCurveTo(51,424,56,425,57,426);
+ctx.bezierCurveTo(63,428,66,434,67,436);
+ctx.lineTo(69,441);
+ctx.lineTo(69,446);
+ctx.lineTo(69,451);
+ctx.lineTo(69,454);
+ctx.fill();
+
+}
+
+var g_start=false;
+function gameStart() {
+	if(g_start==false) { 
+	drawSnake();
+	drawGameStart();
+	}
+}
+
+function drawScore() {
+		ctx.save();
+	  
+	  ctx.font = "Bold 20px 'Stencil Std'";
+      ctx.fillStyle = "rgb(129, 54, 12)";
+	  ctx.fillRect(500,10,200,25);
+	  ctx.fillStyle = "rgb(190, 100, 35)";
+      ctx.fillText("S c o r e:"+g_score, 510,30);
+}
+
+
+function drawGameStart() {
+		
+	  ctx.fillStyle = "rgba(255, 255,255,.3)";
+	  ctx.fillRect(0,0,can.width,can.height);
+	  ctx.save();
+      ctx.font = "Bold 31.5px 'Myriad Pro'";
+	  ctx.fillStyle="black";
+      ctx.fillText("Quit", 379.0, 326.6);
+
+      ctx.font = "Bold 57.3px 'Stencil Std'";
+      ctx.fillStyle = "rgb(4, 4, 4)";
+      ctx.fillText("Start Game", 228.6, 248.5);
+
+      ctx.font = "Bold 57.3px 'Stencil Std'";
+      ctx.save();
+      ctx.transform(1.018, 0.000, 0.000, 1.000, 225.6, 251.5);
+      ctx.fillStyle = "rgb(14, 75, 37)";
+      ctx.fillText("Start Game", 0, 0);
+      ctx.restore();
+      ctx.restore();
+
+}
+//---------------------------------Game Looop-----------------------------------------
+fpss();
+draw(ctx);
+assignArrayCordinates();
+assignSnakeNodeObjects();
+gameStart();
+
+
+
+function collisions() {
+	randomBallSpawns();
+	checkCollision();
+	dectectCollision();
+	wallCollision();
+}
+
+function snakeLoop() {
+	if(g_start==true){
+	clearScreen();
+	collisions();
+	drawSnake();
+	directionController();
+	snakeProperties();
+	drawScore();
+	}
+}
+
+function gameLoop () {
+		
+		snakeLoop();
+		
+		console.log(g_score);
+	
+}
+
+
+setInterval(gameLoop,g_fps);
+
+function mouseDownHandler() {
+	if(g_start==false) {
+		if( (g_mx>235 && g_mx<620 )&&(g_my>215  && g_my<260)) {
+		g_start=true;
+		draw(ctx);
+	}
+	
+	if( (g_mx>388 && g_mx<450 )&& ( g_my>314&& g_my<335)) {
+		window.close();
+	}
+	}
+}
+
+function mouseMoveHandler(e)
+{
+	
+	g_mx=e.clientX;
+	g_my=e.clientY;
+	
+	
+	
+}
+
+
+window.addEventListener("keydown",keyDownHandler);
+window.addEventListener("keyup",keyUpHandler);
+window.addEventListener("mousedown",mouseDownHandler);
+window.addEventListener("mousemove",mouseMoveHandler);
+
+</script>
+
+<h3>Controls:</h3>
+	<ul>
+
+    <li>Use Arrow keys to move.</li>
+
+    <li>Eat "Green" Ball to increase speed</li>
+    
+   <li>Eat "Red" Ball to decrease speed</li>
+    
+    <li>Eat "White" Ball to increase length</li>  
+
+</ul>
+</body>
+</html>
+	

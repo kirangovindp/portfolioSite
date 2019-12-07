@@ -1,0 +1,258 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>Untitled Document</title>
+</head>
+
+<body>
+
+	<canvas height="700" width="600" id="can" style="border:1px solid" align="center"> Browser Not supported </canvas>
+	<script>
+		var can = document.getElementById("can");
+		var ctx = can.getContext("2d");
+		var tile = new Array() 		// Tile Object Variable
+		var g_xpos = new Array(0, 150, 300, 450, 0, 150, 300, 450, 0, 150, 300, 450, 0, 150, 300, 450);		//Array to create xposition's of tiles
+		var g_ypos = new Array(0, 0, 0, 0, 150, 150, 150, 150, 300, 300, 300, 300, 450, 450, 450, 450);		//Array to create yposition's of tiles
+		var g_alpha = new Array("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", ""); 		// To Asign alphabets to tiles
+		var g_mouseFlag = false;	// Flag to check whether mouse is clicked or not :true- clicked
+		var g_mouseX, g_mouseY; 			// Current X and Y cordinates of mouse
+		var g_start = false;		// If true it draws all the tiles ,if false it stops
+		var g_tilePos;
+		var g_checkPos = false;		//Check t
+		var g_yposGameOver = new Array(0, 0, 0, 0, 150, 150, 150, 150, 300, 300, 300, 300, 450, 450, 450, 450);
+		var g_xposGameOver = new Array(0, 150, 300, 450, 0, 150, 300, 450, 0, 150, 300, 450, 0, 150, 300, 450);
+		var g_timer; 			// Flag for timer
+		var g_gameOverFlag;	// Game over Flag
+
+		function c_tile(l_color, l_letter)  // Class Cr8'd for tiles
+		{
+			this.color = l_color;		// Give color to the text and the outline
+			this.letter = l_letter;		// The text you want to store inside the Table
+			this.position;		//Position of the tiles
+			this.tilepos;
+			this.tileNo;		//The Serial No. of tile
+
+			this.drawTile = m_drawTile;		//Method to draw the tile
+			this.swapTile = m_swapTile;		//Method to swap the tile
+		}
+
+		function m_swapTile()		// function to swap the specific tile to the blank tile
+		{
+			if (g_checkPos == true) {
+				var l_xpos, l_ypos;
+				l_xpos = g_xpos[this.tileNo];
+				g_xpos[this.tileNo] = g_xpos[15];
+				g_xpos[15] = l_xpos;
+				l_ypos = g_ypos[this.tileNo];
+				g_ypos[this.tileNo] = g_ypos[15];
+				g_ypos[15] = l_ypos;
+				g_checkPos = false;
+			}
+
+			console.log("swapped to"+ this.tileNo);
+		}
+
+		function m_drawTile(l_xpos, l_ypos) // function To draw tile on the given x and y position
+		{
+			ctx.fillRect(l_xpos, l_ypos, 150, 150);
+			ctx.strokeStyle = this.color;
+			ctx.strokeRect(l_xpos + 9, l_ypos + 9, 132, 132);
+			ctx.strokeRect(l_xpos + 10, l_ypos + 10, 130, 130);
+			ctx.font = "100px Arial";
+			ctx.strokeText(this.letter, l_xpos + 40, l_ypos + 100);
+		}
+
+
+		//------------------Objects of Tiles--------------------------------------------------------
+		function asignObjcts() {
+			for (var l_i = 0; l_i <= 15; l_i++) {
+				tile[l_i] = new c_tile("white", g_alpha[l_i]);
+				tile[l_i].tileNo = l_i;
+			}
+		}
+
+		//-----------------------------------------------------------------------------------------
+
+		function drawAllTiles() //Draw all 16tiles on the screen
+		{
+			if (g_start == true) {
+				ctx.clearRect(0, 0, 600, 600);
+				for (var i = 0; i <= 15; i++) {
+					tile[i].drawTile(g_xpos[i], g_ypos[i]);
+					//console.log("draw");
+				}
+			}
+			g_start = false;
+		}
+
+		function mouseClick()		//Mouse click  function
+		{
+			g_mouseFlag = true;
+			g_timer = true;
+
+			console.log(g_mouseFlag);
+		}
+
+		function mouseUp()			//Mouse Up function
+		{
+			g_mouseFlag = false;
+			console.log(g_mouseFlag);
+		}
+
+		function moveMouse(l_e)		//Move Mouse function
+		{
+			if (g_mouseFlag == true) {
+				g_mouseX = l_e.clientX;
+				g_mouseY = l_e.clientY;
+				console.log(g_mouseX);
+				
+			}
+		}
+
+		function moveTile()		// Move the tile
+		{
+			if (g_mouseFlag == true) {
+				{
+					tile[g_tilePos].swapTile();
+					g_mouseFlag = false;
+					g_start = true;
+
+				}
+			}
+		}
+
+		function checkPos()		//Check the tiles around the cursor for blank tile
+		{
+			if (g_mouseFlag == true) {
+				if ((g_xpos[g_tilePos] + 150) == g_xpos[15] && (g_ypos[g_tilePos] == g_ypos[15])) { g_checkPos = true; console.log("chkpos"); }
+				if ((g_xpos[g_tilePos] - 150) == g_xpos[15] && (g_ypos[g_tilePos] == g_ypos[15])) { g_checkPos = true; console.log("chkpos"); }
+				if (g_xpos[g_tilePos] == g_xpos[15] && (g_ypos[g_tilePos] + 150 == g_ypos[15])) { g_checkPos = true; console.log("chkpos"); }
+				if (g_xpos[g_tilePos] == g_xpos[15] && (g_ypos[g_tilePos] - 150 == g_ypos[15])) { g_checkPos = true; console.log("chkpos"); }
+			}
+		}
+
+		function gameStart()		// Start game and sets the tiles to random
+		{
+			asignObjcts();
+			g_mouseFlag = true;
+			for (var l_i = 0; l_i <= 3050; l_i++) {
+
+				g_tilePos = (Math.floor(Math.random() * 15));
+				checkPos();
+				tile[g_tilePos].swapTile();
+				console.log(1);
+			}
+			g_start = true;
+			g_mouseFlag = false;
+		}
+
+
+		function mousePosition()		//To know the tile position 
+		{
+			if (g_mouseFlag == true) {
+				for (var l_i = 0; l_i <= 15; l_i++) {
+					if ((g_mouseX > g_xpos[l_i]) && (g_mouseX < g_xpos[l_i] + 150) && (g_mouseY > g_ypos[l_i]) && (g_mouseY < g_ypos[l_i] + 150)) {
+						tile[l_i].tilepos = l_i;
+						g_tilePos = l_i;
+						console.log(g_mouseX);
+					}
+				}
+			}
+		}
+
+		function testMousePos() {
+			var x = g_mouseX/150;
+			var y = g_mouseY/150;
+			var i = x*y;
+			//console.log(g_mouseX);
+		}
+
+		var g_s = 0, g_m = 0, g_ms = 0;
+
+		function timer() {
+			if (g_timer == true) {
+				for (var l_i = 0; l_i <= 132; l_i++) {
+					if (l_i > 130) {
+						g_ms++;
+						//l_i=30;
+						if (g_ms > 59) {
+							g_s++;
+							g_ms = 0;
+						}
+						if (g_s > 59) {
+							g_m++;
+							g_s = 0;
+						}
+					}
+				}
+			}
+		}
+
+		function printTimer() {
+			ctx.clearRect(0, 600, 600, 100);
+			ctx.fillRect(0, 600, 600, 100);
+			ctx.strokeRect(10, 610, 580, 80);
+			ctx.strokeRect(10, 610, 580, 80);
+			ctx.font = "50px Arial";
+			ctx.strokeText(g_m, 260, 665);
+			ctx.strokeText(":", 300, 660);
+			ctx.strokeText(g_s, 320, 665);
+		}
+
+		function gameOver() {
+			var g_gOver = 0;
+			if (g_start == true) {
+				for (var i = 0; i <= 15; i++) {
+					//console.log(g_xpos[i]);
+					//console.log(g_xposGameOver[i]);	
+					if (g_xpos[i] == g_xposGameOver[i] && g_ypos[i] == g_yposGameOver[i]) {
+						g_gOver++;
+						console.log(g_gOver);
+					}
+				}
+			}
+			if (g_gOver == 16) {
+				g_start = false;
+				g_timer = false;
+				ctx.clearRect(0, 0, 700, 700)
+				ctx.fillRect(0, 0, 700, 700)
+				ctx.font = "75px Arial"
+				ctx.strokeText("Game Ovvaaa!!!!!", 0, 350)
+			}
+		}
+
+
+		gameStart();
+
+		function gameLoop()	// Main Game loop function
+		{
+			timer();
+			printTimer();
+			drawAllTiles();
+			testMousePos();
+			mousePosition();
+			checkPos();
+			moveTile();
+			gameOver();
+		}
+
+		setInterval(gameLoop, 33.33);
+		//----------------------------Event Listeners-----------------------
+		window.addEventListener("click", mouseClick);
+		window.addEventListener("mousemove", moveMouse);
+		window.addEventListener("mouseup", mouseUp);
+
+	</script>
+	<h3>Instruction:</h3>
+	<ul>
+
+		<li>Click on Tile to move it to the vacant spot.</li>
+
+	</ul>
+
+</body>
+
+</html>

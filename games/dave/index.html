@@ -1,0 +1,1071 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Wall</title>
+</head>
+
+<body>
+<canvas id="can" width="500" height="300" style="border: thick; border-color: #F00; background-color: #000;"> </canvas>
+
+<script> 
+
+var ctx=document.getElementById("can").getContext("2d");
+var player;
+var keyPress = new Array();
+var wallNode = new Array();
+var powerUps = new Array();
+var bullet = new Array();
+var monsterNode = new Array();
+var g_keyDown = false;
+var g_brickWall = new Image();
+var g_platform = new Image();
+var g_dave = new Array();
+var player_speed = 3;
+var g_bulletSpeed = 7;
+var g_gravity=0;
+var g_jumpVariable=1;
+var g_pickUp = new Array();
+var g_fire = new Array();
+var g_water = new Array();
+var g_weed = new Array();
+var g_cup = new Array();
+var g_explosion = new Array();
+var g_border = new Array();
+var g_scoreText = new Array();
+var g_bullet = new Array();
+var g_monster = new Image();
+var g_door = new Image();
+var g_lives = new Image();
+var g_gameOver = new Image();
+var g_score = 0;
+var g_xOffSet = player_speed;
+var gameOver = false;
+
+
+var g_counterLimit = 4;
+var g_charCounterLimit = 1;
+
+function loadImages() {
+	
+	for(var l_i=0;l_i<=2;l_i++) {
+	g_explosion[l_i]= new Image();
+	}
+	
+	for(var l_i=0;l_i<=2;l_i++) {
+	g_pickUp[l_i]= new Image();
+	}
+	
+	for(var l_i=0;l_i<=3;l_i++) {
+	g_fire[l_i]= new Image();
+	}
+	
+	for(var l_i=0;l_i<=3;l_i++) {
+	g_water[l_i]= new Image();
+	}
+	
+	for(var l_i=0;l_i<=3;l_i++) {
+	g_weed[l_i]= new Image();
+	}
+	
+	for(var l_i=0;l_i<=5;l_i++) {
+	g_cup[l_i]= new Image();
+	}
+	
+	for(var l_i=0;l_i<=7;l_i++) {
+	g_dave[l_i]= new Image();
+	}
+	
+	for(var l_i=0;l_i<=2;l_i++) {
+	g_border[l_i]= new Image();
+	}
+	
+	for(var l_i=0;l_i<=11;l_i++) {
+	g_scoreText[l_i]= new Image();
+	
+	}
+	
+	for(var l_i=0;l_i<=2;l_i++) {
+	g_bullet[l_i]= new Image();
+	}
+
+g_door.src = 'dave/door.png';
+g_monster.src = 'dave/monster.png';
+g_lives.src ='dave/lives.png';
+g_gameOver.src ='dave/gameOver.png';
+
+g_bullet[0].src ='dave/bulletRight.png';
+g_bullet[1].src ='dave/bulletLeft.png';
+
+g_scoreText[0].src = 'dave/0.png';
+g_scoreText[1].src = 'dave/1.png';
+g_scoreText[2].src = 'dave/2.png';
+g_scoreText[3].src = 'dave/3.png';
+g_scoreText[4].src = 'dave/4.png';
+g_scoreText[5].src = 'dave/5.png';
+g_scoreText[6].src = 'dave/6.png';
+g_scoreText[7].src = 'dave/7.png';
+g_scoreText[8].src = 'dave/8.png';
+g_scoreText[9].src = 'dave/9.png';
+g_scoreText[10].src = 'dave/score.png';
+g_scoreText[11].src = 'dave/levelanddaves.png';
+
+g_border[0].src = 'dave/topborder.png';
+g_border[1].src = 'dave/bottomborder.png';
+	
+g_dave[0].src = 'dave/dave1.png';
+g_dave[1].src = 'dave/dave2.png';
+g_dave[2].src = 'dave/dave3.png';
+g_dave[3].src = 'dave/dave4.png';
+g_dave[4].src = 'dave/dave5.png';
+g_dave[5].src = 'dave/dave6.png';
+g_dave[6].src = 'dave/dave7.png'; //Dave jump right
+g_dave[7].src = 'dave/dave8.png'; //Dave jump left
+
+	
+g_brickWall.src = 'dave/redTile.png';
+g_platform.src = 'dave/platformTile.png';
+
+g_explosion[0].src="dave/explosion1.png";
+g_explosion[1].src="dave/explosion2.png";
+
+g_pickUp[0].src="dave/diamonds.png";
+g_pickUp[1].src="dave/redDiamonds.png";
+g_pickUp[2].src="dave/sphere.png";
+
+g_fire[0].src="dave/fire1.png";
+g_fire[1].src="dave/fire2.png";
+g_fire[2].src="dave/fire3.png";
+g_fire[3].src="dave/fire4.png";
+
+g_water[0].src="dave/water1.png";
+g_water[1].src="dave/water2.png";
+g_water[2].src="dave/water3.png";
+g_water[3].src="dave/water4.png";
+
+g_weed[0].src="dave/weed1.png";
+g_weed[1].src="dave/weed2.png";
+g_weed[2].src="dave/weed3.png";
+g_weed[3].src="dave/weed4.png";
+
+g_cup[0].src="dave/cup1.png";
+g_cup[1].src="dave/cup2.png";
+g_cup[2].src="dave/cup3.png";
+g_cup[3].src="dave/cup4.png";
+g_cup[4].src="dave/cup5.png";
+	
+}
+
+loadImages();
+
+var g_levelDesign = [
+					1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+					1,4,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,10,5,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,11,1,1,
+					1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+					1,2,0,0,2,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,1,0,0,0,0,0,1,0,0,0,8,0,0,8,0,0,0,0,1,
+					1,0,0,0,0,0,0,0,2,2,2,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,1,1,1,1,1,1,1,1,1,0,0,1,0,0,0,8,0,8,0,0,0,0,0,1,
+					1,0,2,2,0,0,0,0,0,1,0,0,0,0,1,0,2,2,2,2,2,0,1,0,0,1,1,0,5,1,0,0,0,0,1,0,0,1,0,0,0,8,8,0,0,0,0,0,0,1,
+					1,0,0,0,0,0,0,0,0,1,0,2,0,9,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,1,0,0,1,0,1,0,1,1,0,0,0,8,0,8,0,0,0,0,0,1,
+					1,0,0,0,2,2,2,0,4,1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,1,0,1,1,0,1,0,1,1,0,0,0,0,1,0,0,0,8,0,0,8,0,0,0,0,1,
+					1,0,0,0,0,0,0,0,0,1,3,0,0,2,1,0,3,3,3,3,3,0,1,0,0,0,1,5,0,0,0,1,1,0,0,1,5,1,0,0,0,0,0,0,0,0,0,0,0,1,
+					1,1,1,6,6,6,6,6,6,1,6,6,6,6,1,7,7,7,7,7,7,7,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,6,6,6,6,6,6,6,6,6,6,6,1];
+
+
+function levelDesign() {
+	var l_vx=0;var l_vy=24;var l_wallNumber=0;var l_w=0; var l_wx=0; var l_powerNumber=0; var l_monsterNumber=0;
+	for(var l_i=1;l_i<=520;l_i++) {
+		if(g_levelDesign[l_i-1]==1) {
+			
+			wallNode[l_wallNumber] = new c_wallNode(l_vx,l_vy,24,24,1);
+			l_wallNumber++;
+			l_w=0;
+		}
+		if(g_levelDesign[l_i-1]==2) {
+			l_wx=l_vx;
+			if(l_w>0) {l_wx=l_wx}
+			wallNode[l_wallNumber] = new c_wallNode(l_wx,l_vy,24,24,2);
+			l_wallNumber++;
+			l_w++;
+		}
+		
+		if(g_levelDesign[l_i-1]==3) { //diamond
+			
+			powerUps[l_powerNumber] = new c_powerUps(l_vx,l_vy,20,20,0);
+			l_powerNumber++;
+			l_w=0;
+		}
+		
+		if(g_levelDesign[l_i-1]==4) { //red diamond
+			
+			powerUps[l_powerNumber] = new c_powerUps(l_vx,l_vy,20,20,1);
+			l_powerNumber++;
+			l_w=0;
+		}
+		
+		if(g_levelDesign[l_i-1]==5) { //shpere
+			
+			powerUps[l_powerNumber] = new c_powerUps(l_vx,l_vy,15,13,2);
+			l_powerNumber++;
+			l_w=0;
+		}
+		
+		if(g_levelDesign[l_i-1]==6) { //fire
+			var l_tempy = l_vy;
+			l_tempy=l_tempy+15;
+			powerUps[l_powerNumber] = new c_powerUps(l_vx,l_tempy,24,9,3,Math.floor(Math.random()*3));
+			l_powerNumber++;
+			l_w=0;
+		}
+		
+		if(g_levelDesign[l_i-1]==7) { //water
+			var l_tempy = l_vy;
+			l_tempy=l_tempy+13;
+			powerUps[l_powerNumber] = new c_powerUps(l_vx,l_tempy,24,11,4,Math.floor(Math.random()*3));
+			l_powerNumber++;
+			l_w=0;
+		}
+		
+		if(g_levelDesign[l_i-1]==8) { //weed
+			
+			powerUps[l_powerNumber] = new c_powerUps(l_vx,l_vy,20,20,5,0);
+			l_powerNumber++;
+			l_w=0;
+		}
+		
+		if(g_levelDesign[l_i-1]==9) { //cup
+			
+			powerUps[l_powerNumber] = new c_powerUps(l_vx,l_vy,24,24,6,0);
+			l_powerNumber++;
+			l_w=0;
+		}
+		
+		if(g_levelDesign[l_i-1]==10) { //cup
+			
+			monsterNode[l_monsterNumber] = new c_monster(l_vx,l_vy,40,22);
+			l_monsterNumber++;
+			l_w=0;
+		}
+		
+		if(g_levelDesign[l_i-1]==11) { //door
+			
+			powerUps[l_powerNumber] = new c_powerUps(l_vx,l_vy,24,24,7,0);
+			l_powerNumber++;
+			l_w=0;
+		}
+		
+		l_vx=l_vx+24;
+		if(l_i%50==0) {	l_vy=l_vy+24; l_vx=0 }
+		
+	}
+	
+}
+
+levelDesign();
+
+function slideLevel () { 
+if( (player.xPos > 200 ) && (keyPress[39]==true) || player.dead ==true) { console.log("zz");
+		for(var l_i=0;l_i<wallNode.length;l_i++) {
+			wallNode[l_i].xPos=wallNode[l_i].xPos-g_xOffSet;
+			
+			}
+			
+		for(var l_i=0;l_i<powerUps.length;l_i++) {
+			powerUps[l_i].xPos=powerUps[l_i].xPos-g_xOffSet;
+		}
+		
+		for(var l_i=0;l_i<monsterNode.length;l_i++) {
+			monsterNode[l_i].xPos=monsterNode[l_i].xPos-g_xOffSet;
+		}
+		
+			player.xPos=player.xPos-g_xOffSet;
+			bullet[0].xPos=bullet[0].xPos-g_xOffSet;
+			bullet[1].xPos=bullet[1].xPos-g_xOffSet;
+
+}
+
+if( (player.xPos < 200 ) && (keyPress[37]==true) && (wallNode[0].xPos<0)) { 
+
+		for(var l_i=0;l_i<wallNode.length;l_i++) {
+			wallNode[l_i].xPos=wallNode[l_i].xPos+g_xOffSet;
+			
+		}
+		
+		for(var l_i=0;l_i<powerUps.length;l_i++) {
+			powerUps[l_i].xPos=powerUps[l_i].xPos+g_xOffSet;
+		}
+		
+			for(var l_i=0;l_i<monsterNode.length;l_i++) {
+			monsterNode[l_i].xPos=monsterNode[l_i].xPos+g_xOffSet;
+		}
+		
+		player.xPos=player.xPos+g_xOffSet;
+		bullet[0].xPos=bullet[0].xPos+g_xOffSet;
+		bullet[1].xPos=bullet[1].xPos+g_xOffSet;
+		
+}
+}
+
+//-------------------Wall Nodes Start-----------------------------------------------------------
+
+
+
+function c_wallNode(l_x,l_y,l_width,l_height,l_type) {
+this.width = l_width;
+this.height = l_height;
+this.xPos = l_x;
+this.yPos = l_y;
+this.type = l_type
+this.color = "brown"
+//Methods
+this.drawWallNode = function () {
+											
+				if(this.type==1) {
+				ctx.drawImage(g_brickWall,this.xPos,this.yPos);
+				ctx.strokeStyle="white";	
+				//ctx.strokeRect(this.xPos,this.yPos,this.width,this.height);	
+				}
+				
+				if(this.type==2) { 
+				this.width=24 ; this.height = 16; 
+				ctx.drawImage(g_platform,this.xPos,this.yPos);	
+				ctx.strokeStyle="white";	
+				//ctx.strokeRect(this.xPos,this.yPos,this.width,this.height);
+				}
+				
+				
+				
+				}	
+				
+				
+	
+
+}
+
+
+
+function drawWall() {
+	for(var l_i=0;l_i<wallNode.length;l_i++) {
+			wallNode[l_i].drawWallNode();
+			//console.log("drawn wall"+l_i);
+	}
+}
+
+//-------------------Wall Nodes End-----------------------------------------------------------
+
+
+//-------------------------------Player ----------------------------------------------------
+
+
+
+function c_player(l_xPos,l_yPos,l_speed) {
+this.height = 24;
+this.width= 19;
+this.xPos = l_xPos;
+this.yPos = l_yPos;
+this.score = 0;
+
+this.fireBulletFlag = false;
+
+this.draw = true;
+this.dead = false;
+this.life = 3;
+
+this.speed = l_speed;
+this.speedCounter = 0;
+
+this.faceDirection = 0; // 0 = Right 1 = left
+this.movement = true ;
+this.jump = false;
+this.jumpFlag = false;
+this.inAir = false;
+this.velocity=1;
+
+this.imageNumber = 0;
+this.movePos = 0;
+this.counter=0;
+this.explosiveCounter = 0;
+this.deathCounter = 0;
+
+//Methods
+this.drawPlayer = function () {
+	if(this.draw==true) {
+				
+				if(this.dead==false) {							
+				if(this.faceDirection==0 && this.jumpFlag!=true) { this.imageNumber=0;}  // Right
+				if(this.faceDirection==1 && this.jumpFlag!=true) { this.imageNumber=3;}  // Left
+				if(this.faceDirection==0 && this.jumpFlag==true) { this.imageNumber=6; this.movePos=0;}
+				if(this.faceDirection==1 && this.jumpFlag==true) { this.imageNumber=7; this.movePos=0;}
+				
+				ctx.drawImage(g_dave[this.imageNumber+this.movePos],this.xPos,this.yPos);
+				//ctx.strokeStyle="white";	
+				//ctx.strokeRect(this.xPos,this.yPos,this.width,this.height);
+				}
+				
+				if(this.dead==true) {
+					
+				ctx.drawImage(g_explosion[this.imageNumber%2],this.xPos,this.yPos);	
+				this.explosiveCounter++;
+				
+				if(this.explosiveCounter%4==0) {this.imageNumber++;}
+				if(this.explosiveCounter>12){
+					this.draw=false;
+					
+					}
+				
+				}
+	}
+	
+	}
+				
+//								
+this.movePlayer = function () {
+	this.blockRight=false;
+	this.blockLeft=false;
+	this.blockDown=false;
+	this.blockUp=false;
+
+	for(var l_i=0;l_i<wallNode.length;l_i++) {
+		if((this.xPos+this.width >= wallNode[l_i].xPos)&&(this.xPos+this.width<=wallNode[l_i].xPos+wallNode[l_i].width)){
+			if((this.yPos+this.height>wallNode[l_i].yPos)&&(this.yPos<wallNode[l_i].yPos+wallNode[l_i].height)){
+					this.blockRight=true;
+					//console.log("right");
+					} 
+					}
+		
+		if((this.xPos <= (wallNode[l_i].xPos+wallNode[l_i].width))&&(player.xPos>=wallNode[l_i].xPos)){
+			if((this.yPos+this.height>wallNode[l_i].yPos)&&(this.yPos<wallNode[l_i].yPos+wallNode[l_i].height)){ 
+					//console.log(l_i+","+wallNode[l_i].xPos);
+					//console.log("left");
+					this.blockLeft=true;
+					}
+					}
+					
+		if((this.yPos+this.height >= wallNode[l_i].yPos)&&(this.yPos+this.height<=wallNode[l_i].yPos+wallNode[l_i].height)){
+			if((this.xPos+this.width>wallNode[l_i].xPos)&&(this.xPos<wallNode[l_i].xPos+wallNode[l_i].width)){
+					this.blockDown=true;
+					this.jumpFlag=false;
+					temp_gravity =0;
+					temp_velocity = 4;
+					
+					//console.log("down");
+					} 
+					}
+		if((this.yPos <= wallNode[l_i].yPos+wallNode[l_i].height)&& (this.yPos>=wallNode[l_i].yPos)){
+			if((this.xPos+this.width>wallNode[l_i].xPos)&&(this.xPos<wallNode[l_i].xPos+wallNode[l_i].width)){	
+					this.blockUp=true;
+					this.inAir=false;
+					 temp_yPos =0;
+					//console.log("up");
+					}
+					}
+		
+		else {
+			
+			this.movement = true;
+		}
+	}
+}
+
+//
+this.playerLifeCount = function () {
+		if(this.life == 0 ) {
+			gameOver = true;	
+		}
+}
+//
+
+this.powerUpCollision = function () {
+				for(var l_i=0;l_i<powerUps.length;l_i++) {
+				
+				
+				if((this.xPos+this.width>=powerUps[l_i].xPos) && (this.xPos <= powerUps[l_i].xPos+powerUps[l_i].width)) {				
+				if(this.yPos <= powerUps[l_i].yPos+powerUps[l_i].height && this.yPos+this.height >= powerUps[l_i].yPos) {
+					
+					if(powerUps[l_i].type==0 && powerUps[l_i].draw==true) { this.score +=100; console.log(this.score);}
+					if(powerUps[l_i].type==1 && powerUps[l_i].draw==true) { this.score +=150; console.log(this.score);}
+					if(powerUps[l_i].type==6 && powerUps[l_i].draw==true) { this.score +=1000; console.log(this.score);}
+					if(powerUps[l_i].type==2 && powerUps[l_i].draw==true) { this.score +=50; console.log(this.score);}
+					if(powerUps[l_i].type==7 && powerUps[l_i].draw==true) { gameOver = true; console.log("gameOver");}
+					if(powerUps[l_i].type==3 || powerUps[l_i].type==4 || powerUps[l_i].type==5 ) {player.dead = true;}
+					else {powerUps[l_i].draw = false;}
+						
+				}	 			
+			}
+		}
+	}
+
+//
+
+this.monsterCollision = function () {
+	for(var l_i=0;l_i<monsterNode.length;l_i++){
+			if((this.xPos+this.width>=monsterNode[l_i].xPos) && (this.xPos <= monsterNode[l_i].xPos+monsterNode[l_i].width)) {				
+				if(this.yPos <= monsterNode[l_i].yPos+monsterNode[l_i].height && this.yPos+this.height >= monsterNode[l_i].yPos) {
+					if(monsterNode[l_i].dead!=true) {
+					this.dead = true;
+					}
+				}
+			}
+		}	
+	
+}
+
+//
+
+this.fireBullet = function () {
+	if(this.fireBulletFlag==true) {
+			bullet[0].fireBullet();
+				
+	}
+}
+
+
+//
+this.directonControl = function () {
+	if(this.dead==false) {
+		
+	if(this.movement==true) {		 
+	if(keyPress[37]==true) {if(this.blockLeft!=true)  {
+		if(this.faceDirection==0) { this.movePos=0; }
+			this.counter += 1; 			
+			this.faceDirection=1;
+			this.speedCounter += 1;
+			if(this.counter>g_counterLimit) { this.counter=0; }
+			if(this.counter==g_charCounterLimit && this.speedCounter >= this.speed) {
+					this.movePos += 1; 
+					this.speedCounter = 0;
+					if(this.movePos>2) {this.movePos=0;}
+					}
+			this.xPos -= 1;
+			
+		}
+			slideLevel ();
+			
+		}
+	
+	if(keyPress[39]==true) {if(this.blockRight!=true) {
+		
+		if(this.faceDirection==1) {this.movePos=0; }
+			this.faceDirection=0;
+			this.speedCounter += 1;
+			this.counter += 1; 
+				if(this.counter>g_counterLimit) { this.counter=0; }
+			
+				if(this.counter==g_charCounterLimit && this.speedCounter >= this.speed) {
+					this.movePos += 1; 
+					this.speedCounter = 0;
+					if(this.movePos>2) {this.movePos=0;}
+					}
+			this.xPos += 1 ;
+		
+			
+		}
+		
+		
+		slideLevel ();
+		}
+	
+	if(keyPress[38]==true) {if(this.blockUp!=true && this.jumpFlag!=true) 	{
+		this.jumpFlag=true;
+		this.blockDown=true; 
+		this.jump=true;}
+		}
+	
+	if(keyPress[32]==true && bullet[0].draw!=true) {
+		this.fireBulletFlag = true;
+		
+		bullet[0].xPos = this.xPos;
+		bullet[0].yPos = this.yPos;	
+		bullet[0].collisionFlag = false;
+	}
+		
+	}
+
+}
+	
+}
+
+//
+var temp_yPos = 0;
+var temp_accel = 0.2;
+var temp_velocity = 4;
+var temp_gravity = 0;
+
+this.gravity = function() {
+	if(this.dead==false) {
+		
+	for(var l_i=0;l_i<=temp_velocity;l_i++) {
+	if(this.inAir==true && this.blockUp!=true) {
+			temp_yPos += 1;
+			this.yPos -= 1;
+			if(temp_yPos > 48 ) {this.jump=false; this.inAir = false; temp_yPos =0;}
+			}
+	}
+	
+	
+	if(this.inAir==true && this.blockUp!=true) {
+	
+		if(temp_velocity >= 0 ) {	
+			temp_velocity = temp_velocity-temp_accel;
+			
+		}
+	}
+	
+	for(var l_i=0;l_i<=temp_gravity;l_i++) {
+		if(this.inAir!=true) {
+			
+			this.movePlayer();
+		if((this.yPos <=280) || (this.blockUp==true || this.blockLeft==true || this.blockRight==true )) {
+	 		if (this.blockDown!=true) { 
+			 temp_velocity = 4;
+			 this.yPos += 1;
+			 this.jumpFlag=true;	
+			 this.movePos=0;
+			 	 
+					} 
+				}
+			}
+	}
+	
+	if(this.inAir!=true) {
+		if((this.yPos <=280) || (this.blockUp==true || this.blockLeft==true || this.blockRight==true )) {
+	 		if (this.blockDown!=true) { 
+			temp_gravity = temp_gravity + temp_accel;
+			
+			}
+		}
+	}
+	
+
+		
+	}
+	
+	}
+
+this.jumpMethod = function () {
+	if(this.jump==true &&this.inAir!=true) {
+		this.inAir = true;
+		this.jump = false;	
+			}
+		}
+
+this.respawn = function () {
+			if(this.life >=0 && this.dead==true) {
+					this.xPos = 24 ;
+					this.yPos = 192;
+					g_xOffSet = player_speed;
+					this.dead = false;
+					this.draw = true;
+					this.deathCounter=0;
+					console.log("zz");	
+					
+			}
+}
+
+this.playerDead = function () {
+	if(this.dead==true) {
+	
+	this.deathCounter++;
+		if(this.deathCounter >= 40 ) {
+			this.life = this.life - 1;
+			g_xOffSet = wallNode[0].xPos - 0;
+			slideLevel();
+			this.respawn();	
+			console.log(this.dead);	
+			}
+	
+	
+	}
+}
+/////////////////////////////////////////////////////
+}
+
+
+function playerSpeed() {
+		for(var l_i=0;l_i<player.speed;l_i++) {
+					player.movePlayer();
+					player.directonControl();
+				}
+				
+				
+		
+					player.gravity();	
+					player.movePlayer();
+}
+
+
+
+function assignPlayerObject() {
+player = new c_player(24,192,player_speed);
+
+}
+
+assignPlayerObject();
+
+//-------------------------------Player End----------------------------------------------------
+
+
+//----------------------------------------Powerups and Pickups------------------------------------------
+
+
+
+
+function c_powerUps(l_xPos,l_yPos,l_width,l_height,l_type,l_s) {
+	this.xPos = l_xPos;
+	this.yPos = l_yPos;
+	
+	this.width = l_width;
+	this.height = l_height;
+	this.type = l_type;
+	
+	this.draw = true;
+	
+	this.counter = 0;
+	this.imageNumber =  l_s;
+	
+	//Methods------------------------------------------------
+	
+	this.drawPowerUp = function () {
+					
+					
+					
+					this.counter += 1; if(this.counter>g_counterLimit) { this.counter=0 }
+					
+					if(this.type==0) {
+						if(this.draw==true) {
+						ctx.drawImage(g_pickUp[0],this.xPos,this.yPos+8);	
+							
+						ctx.strokeStyle="red";
+						//ctx.strokeRect(this.xPos,this.yPos,this.width,this.height);
+						
+						}
+					}
+					
+					if(this.type==1) {
+						if(this.draw==true) {
+						ctx.drawImage(g_pickUp[1],this.xPos,this.yPos+8);	
+							
+						ctx.strokeStyle="red";
+						//ctx.strokeRect(this.xPos,this.yPos,this.width,this.height);
+						}
+					}
+					
+					if(this.type==2) {
+						if(this.draw==true) {
+						ctx.drawImage(g_pickUp[2],this.xPos+5,this.yPos+6);	
+							
+						ctx.strokeStyle="red";
+						//ctx.strokeRect(this.xPos,this.yPos,this.width,this.height);
+						}					
+					}
+					
+					if(this.type==3) { //fire
+						if(this.draw==true) {
+						if(this.counter==g_counterLimit) {this.imageNumber +=1; if(this.imageNumber>=3) {this.imageNumber=0;}}
+						ctx.drawImage(g_fire[this.imageNumber],this.xPos,this.yPos);	
+							
+						
+						}					
+					}
+					
+					if(this.type==4) { //water
+						if(this.draw==true) {
+							if(this.counter==g_counterLimit) {this.imageNumber +=1; if(this.imageNumber>=3) {this.imageNumber=0;}}
+						ctx.drawImage(g_water[this.imageNumber],this.xPos,this.yPos);	
+						
+						}					
+					}
+					
+					if(this.type==5) { //weed
+						if(this.draw==true) {
+							if(this.counter==g_counterLimit) {this.imageNumber +=1; if(this.imageNumber>=3) {this.imageNumber=0;}}
+						ctx.drawImage(g_weed[this.imageNumber],this.xPos,this.yPos);	
+						
+						}					
+					}
+					
+					if(this.type==6) { //Cup
+						if(this.draw==true) {
+							if(this.counter==g_counterLimit) {this.imageNumber +=1; 
+							
+							if(this.imageNumber>=5) {this.imageNumber=0;}}
+						ctx.drawImage(g_cup[this.imageNumber],this.xPos,this.yPos);	
+						
+						}					
+					}
+					
+					if(this.type==7) { //door
+						if(this.draw==true) {
+						ctx.drawImage(g_door,this.xPos+3,this.yPos);	
+							
+						ctx.strokeStyle="red";
+						//ctx.strokeRect(this.xPos,this.yPos,this.width,this.height);
+						
+						}
+					}
+	}
+	
+
+	
+	
+}
+//------------------------------------------------------------------------------------
+
+function drawPowerups() {
+	for(var l_i=0;l_i<powerUps.length;l_i++) {
+		powerUps[l_i].drawPowerUp();
+	}
+}
+
+//--------------------------------------Powerups End----------------------------------------------
+
+//----------------------------------Bullet-------------------------------------------------------
+function c_bullet(l_xPos,l_yPos,l_width,l_height,l_speed,l_direction,l_user) {
+
+	this.xPos =l_xPos;
+	this.yPos =l_yPos ;
+	this.width = l_width;
+	this.height = l_height;
+	this.direction = l_direction;
+	this.speed = l_speed;
+	this.collisionFlag = false;
+	this.user = l_user;
+	
+	this.draw = false;
+	
+	this.drawBullet =function() {
+		if(this.draw==true){		
+			if(this.direction==0) {	ctx.drawImage(g_bullet[0],this.xPos,this.yPos);}//Right
+			if(this.direction==1) {	ctx.drawImage(g_bullet[1],this.xPos,this.yPos);}//Left	
+		}
+	}
+	
+	this.fireBullet =function (){
+		if(this.collisionFlag==false) {this.draw = true;}
+		
+		if(this.draw==true){
+			this.speed = g_bulletSpeed;
+			for(var l_i=0;l_i<this.speed;l_i++) {
+				if(this.direction==0) {this.xPos += 1; this.collision();}
+				if(this.direction==1) {this.xPos -= 1; this.collision(); }
+			}
+		
+		}
+	}
+	
+	this.collision = function () {
+		for(var l_i=0;l_i<wallNode.length;l_i++){
+			if((this.xPos+this.width>=wallNode[l_i].xPos) && (this.xPos <= wallNode[l_i].xPos+wallNode[l_i].width)) {				
+				if(this.yPos <= wallNode[l_i].yPos+wallNode[l_i].height && this.yPos+this.height >= wallNode[l_i].yPos) {
+					this.draw = false;
+					this.collisionFlag = true;
+					this.resetBullet();
+				}
+			}
+		}
+		if(this.user==1) {
+			if((this.xPos+this.width>=player.xPos) && (this.xPos <= player.xPos+player.width)) {				
+				if(this.yPos <= player.yPos+player.height && this.yPos+this.height >= player.yPos) {
+					player.dead=true;
+					this.draw = false;
+					this.collisionFlag = true;
+					this.resetBullet();
+				}
+			}
+		}
+		if(this.user==0) {
+		for(var l_i=0;l_i<monsterNode.length;l_i++){
+			if((this.xPos+this.width>=monsterNode[l_i].xPos) && (this.xPos <= monsterNode[l_i].xPos+monsterNode[l_i].width)) {				
+				if(this.yPos <= monsterNode[l_i].yPos+monsterNode[l_i].height && this.yPos+this.height >= monsterNode[l_i].yPos) {
+					this.draw = false;
+					this.collisionFlag = true;
+					this.resetBullet();
+					monsterNode[l_i].dead = true;
+				}
+			}
+		}
+		}
+	}
+	
+	this.resetBullet = function() {
+		this.speed = 0;
+		
+	}
+}
+
+bullet[0] = new c_bullet(player.xPos,player.yPos,25,5,g_bulletSpeed,0,0);
+bullet[1] = new c_bullet(monsterNode[0].xPos,monsterNode[0].yPos,25,5,g_bulletSpeed,1,1);
+
+
+//------------------------------------------Bullet End------------------------------------------------------
+
+//-------------------------------------------Monster---------------------------------------------------------
+
+function c_monster(l_xPos,l_yPos,l_height,l_width) {
+	
+	this.xPos = l_xPos;
+	this.yPos = l_yPos;
+	this.height = l_height;
+	this.width = l_width;
+	this.draw = true;
+	this.dead = false;
+	this.explosiveCounter = 0;
+	this.imageNumber=0;
+	
+	this.xCounter = 0;
+	this.increment = 2;
+	this.triggerFire = true;
+	
+	this.drawMonster = function () {
+		if(this.draw==true) {
+		 	if(this.dead==false) {		ctx.drawImage(g_monster,this.xPos,this.yPos); }
+			if(this.dead==true) {
+				ctx.drawImage(g_explosion[this.imageNumber%2],this.xPos,this.yPos);	
+				this.explosiveCounter++;
+				
+				if(this.explosiveCounter%4==0) {this.imageNumber++;}
+				if(this.explosiveCounter>12){
+					this.draw=false;
+					
+					}
+				
+				
+				
+			}
+	
+			
+		}
+		
+		}
+	
+	this.moveMonster = function() { 
+		if(this.dead==false) {
+		this.yPos += this.increment;
+		
+		this.xCounter++;
+		if(this.xCounter >= 30 ) { this.increment=this.increment*-1 ; this.xCounter=0;}
+		}
+	}
+	
+
+
+	this.fireBullet = function() {	
+	
+		if(this.triggerFire==true && this.dead==false) { console.log(this.triggerFire);
+			bullet[1].xPos	= this.xPos;
+			bullet[1].yPos    = this.yPos;
+			this.triggerFire=false;
+			bullet[1].collisionFlag = false;
+		}
+		if(this.triggerFire==false && bullet[1].draw==false) { this.triggerFire=true; }
+		
+		bullet[1].fireBullet();
+	
+	}
+
+}
+//-------------------------------------------Monster End---------------------------------------------------------
+
+//-----------------------------------ScoreBoard & UI -------------------------------------------------------
+
+function drawScoreBoard () {
+	
+	var a = Math.floor(player.score/1000);
+	var b = Math.floor(player.score%1000/100);
+	var c = Math.floor(player.score%1000%100/10);
+	
+	ctx.drawImage(g_border[0],0,0);
+	ctx.drawImage(g_border[1],0,264);
+	ctx.drawImage(g_scoreText[10],0,2);
+	ctx.drawImage(g_scoreText[a],100,2);
+	ctx.drawImage(g_scoreText[b],112,2);
+	ctx.drawImage(g_scoreText[c],122,2);
+	ctx.drawImage(g_scoreText[0],132,2);
+	ctx.drawImage(g_scoreText[11],196,2);
+	
+	for(var l_i=0;l_i<player.life;l_i++)
+	{
+		var l_x=21;
+	ctx.drawImage(g_lives,402+(l_x*l_i),2);
+	}
+	
+	
+}
+//------------------------------------------------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------GameOver-------------------------------------
+function gameOverCheck() {
+	if(gameOver == true) {
+		ctx.drawImage(g_gameOver,150,75);
+	}
+	if(gameOver != true) {
+		drawWall();
+		drawScoreBoard();
+		drawPowerups();
+		player.playerLifeCount();
+		player.drawPlayer();	
+		playerSpeed();
+		
+		player.jumpMethod();
+		player.powerUpCollision();
+		player.monsterCollision();
+		player.fireBullet();
+		player.playerDead();
+		
+		
+		bullet[0].drawBullet();
+		bullet[1].drawBullet();
+		
+		
+		monsterNode[0].drawMonster();
+		monsterNode[0].moveMonster();
+		monsterNode[0].fireBullet();
+				
+	}
+	
+}
+
+
+
+//------------------------------------------------------------------------------------------------------------------------
+
+function keyDownHandler(e) {
+	keyPress[e.keyCode] = true;
+
+}
+
+function keyUpHandler(e) {
+	keyPress[e.keyCode] = false;
+	
+
+	
+}
+
+function gameLoop() {
+ctx.clearRect(0,0,can.width,can.height);
+gameOverCheck();
+
+
+}
+
+setInterval(gameLoop,33);
+window.addEventListener("keydown",keyDownHandler,false);
+window.addEventListener("keyup",keyUpHandler,false);
+
+</script>
+
+
+<h3>Controls:</h3>
+<ul>
+
+    <li>Use Arrow keys to move.</li>
+
+    <li>Press "Space" Button to shoot</li>
+
+    
+
+    
+</ul>
+
+
+</body>
+</html>
